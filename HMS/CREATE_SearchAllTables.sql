@@ -6,7 +6,7 @@ CREATE PROC SearchAllTables
 AS
     BEGIN
 
--- Copyright ï¿½ 2002 Narayana Vyas Kondreddi. All rights reserved.
+-- Copyright © 2002 Narayana Vyas Kondreddi. All rights reserved.
 -- Purpose: To search all columns of all tables for a given search string
 -- Written by: Narayana Vyas Kondreddi
 -- Site: http://vyaskn.tripod.com
@@ -25,6 +25,7 @@ AS
             @ColumnName NVARCHAR(128) ,
             @SearchStr2 NVARCHAR(110);
         SET @TableName = '';
+       SET @SearchStr2 = QUOTENAME('%' + @SearchStr + '%','''')
 
         WHILE @TableName IS NOT NULL
             BEGIN
