@@ -1,39 +1,39 @@
 USE VEGAUAT;
 
 DECLARE @ReservationID INT;
-SET @ReservationID = (SELECT TOP 1 ReservationID FROM dbo.Reservation ORDER BY ReservationID DESC);
-  -- create a table in hotel db with mapping to epitome (ProfileID, ReservationStayID, ReservationStay)
-                       
 DECLARE @ReservationStayID INT;
-SET @ReservationStayID = (SELECT TOP 1 ReservationStayID FROM dbo.ReservationStay ORDER BY ReservationStayID DESC);
-   -- create a table in hotel db with mapping to epitome 
-
-
 DECLARE @CreatedBy NVARCHAR(10);
-SET @CreatedBy = N'R5';
-
 DECLARE @nowDate DATETIME;
-SET @nowDate = GETDATE();
-
-
 DECLARE @PropertyCode NVARCHAR(4);
-SET @PropertyCode = N'VEGA';
-
 DECLARE @CheckInDate DATETIME;
-SET @CheckInDate = '20160705';
-
 DECLARE @ProfileID INT;
+DECLARE @EVENT_ID NVARCHAR(64);
+DECLARE @TrackingNumber NVARCHAR(64);
+SET @ReservationID = ( SELECT TOP 1
+                                ReservationID
+                       FROM     dbo.Reservation
+                       ORDER BY ReservationID DESC
+                     );
+      -- create a table in hotel db with mapping to epitome (ProfileID, ReservationStayID, ReservationStay)
+                       
+SET @ReservationStayID = ( SELECT TOP 1
+                                    ReservationStayID
+                           FROM     dbo.ReservationStay
+                           ORDER BY ReservationStayID DESC
+                         );
+       -- create a table in hotel db with mapping to epitome 
+
+
+SET @CreatedBy = N'R5';
+SET @nowDate = GETDATE();
+SET @PropertyCode = N'VEGA';
+SET @CheckInDate = '20160705';
 SET @ProfileID = ( SELECT   MAX(ProfileID)
                    FROM     dbo.NameInfo
                  );
-
-DECLARE @EVENT_ID NVARCHAR(64);
 SET @EVENT_ID = ( SELECT    CAST(MAX(EVT_EVENTID) + 1 AS NVARCHAR)
                   FROM      dbo.P5ROOMBLOCKINGEVENTS
                 );
-
-
-DECLARE @TrackingNumber NVARCHAR(64);
 SET @TrackingNumber = ( SELECT  ConfirmationNumber
                         FROM    dbo.Reservation
                         WHERE   ReservationID = @ReservationID
@@ -43,6 +43,7 @@ SET @TrackingNumber = ( SELECT  ConfirmationNumber
 
 UPDATE  dbo.ReservationStay
 SET     StatusCode = N'INHOUSE' ,
+        PMSStatusCode = N'INHOUS' ,
         UpdatedOn = GETDATE() ,
         UpdatedBy = @CreatedBy
 WHERE   ReservationStayID = @ReservationStayID;
