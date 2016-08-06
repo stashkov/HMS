@@ -1,3 +1,4 @@
+USE VEGAUAT;
 ------------try to create new reservation
 
 DECLARE @TrackingNumber NVARCHAR(64);

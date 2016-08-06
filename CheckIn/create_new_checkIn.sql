@@ -1,3 +1,5 @@
+USE VEGAUAT;
+
 DECLARE @ReservationID INT;
 SET @ReservationID = (SELECT TOP 1 ReservationID FROM dbo.Reservation ORDER BY ReservationID DESC);
   -- create a table in hotel db with mapping to epitome (ProfileID, ReservationStayID, ReservationStay)

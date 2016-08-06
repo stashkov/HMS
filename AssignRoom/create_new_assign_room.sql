@@ -1,3 +1,5 @@
+USE VEGAUAT;
+
 DECLARE @CheckInDate DATETIME;
 DECLARE @CheckOutDate DATETIME;
 DECLARE @ProfileID INT;
@@ -20,9 +22,18 @@ SET @ProfileID = ( SELECT   MAX(ProfileID)
 SET @CreatedBy = N'R5';
 SET @RoomCode = N'615';
   -- room code
-  SET @RoomID = (SELECT TOP 1 ROO_ROOMID FROM dbo.P5ROOM WHERE ROO_CODE = @RoomCode AND ROO_PROPERTYCODE = N'VEGA')
+SET @RoomID = ( SELECT TOP 1
+                        ROO_ROOMID
+                FROM    dbo.P5ROOM
+                WHERE   ROO_CODE = @RoomCode
+                        AND ROO_PROPERTYCODE = N'VEGA'
+              );
 
-SET @ConfirmationNumber = (SELECT TOP 1 TrackingNumber FROM dbo.TrackingNumber ORDER BY CreatedOn DESC); 
+SET @ConfirmationNumber = ( SELECT TOP 1
+                                    TrackingNumber
+                            FROM    dbo.TrackingNumber
+                            ORDER BY CreatedOn DESC
+                          ); 
 SET @ReservationStayID = ( SELECT TOP 1
                                     ReservationStayID
                            FROM     dbo.ReservationStay
