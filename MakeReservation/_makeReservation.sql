@@ -57,7 +57,7 @@ SET @CreatedBy = N'R5';
 ----randomly generate 8 figures number
 SET @TrackingNumber = ( SELECT  CONVERT(NUMERIC(8, 0), RAND() * 89999999)
                                 + 10000000
-                      );
+                      );  -- TODO check if tracking number already exist in the table TrackingNumber
   
 
 SET @NameInfoID = ( SELECT  NameInfoID
