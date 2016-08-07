@@ -4,9 +4,10 @@ DECLARE @CreatedBy NVARCHAR(10);
 DECLARE @nowDate DATETIME;
 DECLARE @PropertyCode NVARCHAR(4);
 DECLARE @CheckOutDate DATETIME;
---DECLARE @ProfileID INT;
+DECLARE @ProfileID INT;
 --DECLARE @EVENT_ID NVARCHAR(64);
 DECLARE @TrackingNumber NVARCHAR(64);
+DECLARE @CheckInDate DATETIME;
 
 
 SET @ReservationID = ( SELECT TOP 1
@@ -27,10 +28,10 @@ SET @ReservationStayID = ( SELECT TOP 1
 SET @CreatedBy = N'R5';
 SET @nowDate = GETDATE();
 SET @PropertyCode = N'VEGA';
---SET @CheckInDate = '20160705';
---SET @ProfileID = ( SELECT   MAX(ProfileID)
---                   FROM     dbo.NameInfo
---                 );
+SET @CheckInDate = '20160705';
+SET @ProfileID = ( SELECT   MAX(ProfileID)
+                   FROM     dbo.NameInfo
+                 );
 --SET @EVENT_ID = ( SELECT    CAST(MAX(EVT_EVENTID) + 1 AS NVARCHAR)
 --                  FROM      dbo.P5ROOMBLOCKINGEVENTS
 --                );
