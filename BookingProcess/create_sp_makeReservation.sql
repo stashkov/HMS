@@ -15,12 +15,12 @@ ALTER PROCEDURE [dbo].[sp_epi_make_reservation]
 -- HMS Interface: make a reservation for a guest
 --input parameters for the SP
     @ProfileID INT ,
-    @SourceCode NVARCHAR(6) = N'CALL' ,
-    @GuaranteeCode NVARCHAR(6) = N'6PM' ,
     @CheckInDate DATETIME = '20160705' ,
     @CheckOutDate DATETIME = '20160706' ,
     @RatePlanCode NVARCHAR(6) = N'HIGH1' ,
-    @RoomTypeCode NVARCHAR(6) = N'SRTS'
+    @RoomTypeCode NVARCHAR(6) = N'SRTS' ,
+    @SourceCode NVARCHAR(6) = N'CALL' ,
+    @GuaranteeCode NVARCHAR(6) = N'6PM'
 AS
     BEGIN TRAN;
     BEGIN TRY
@@ -1147,8 +1147,8 @@ AS
 
 
                 SELECT  @ReservationStayID AS ReservationStayID ,
-                        @ReservationID AS ReservationID,
-						@TrackingNumber AS TrackingNumber
+                        @ReservationID AS ReservationID ,
+                        @TrackingNumber AS TrackingNumber;
             END;
     END TRY
     BEGIN CATCH
