@@ -1,21 +1,25 @@
 CREATE PROCEDURE [dbo].[sp_epi_]
 --input parameters for the SP
     @ProfileID INT ,
-    @SourceCode NVARCHAR(6) = N'CALL' ,
-    @GuaranteeCode NVARCHAR(6) = N'6PM' ,
-    @CheckInDate DATETIME = '20160705' ,
-    @CheckOutDate DATETIME = '20160706' ,
-    @RatePlanCode NVARCHAR(6) = N'HIGH1' ,
-    @RoomTypeCode NVARCHAR(6) = N'SRTS'
+    @SourceCode NVARCHAR(6) ,
+    @GuaranteeCode NVARCHAR(6) ,
+    @CheckInDate DATETIME ,
+    @CheckOutDate DATETIME ,
+    @RatePlanCode NVARCHAR(6) ,
+    @RoomTypeCode NVARCHAR(6)
 AS
     BEGIN TRAN;
     BEGIN TRY
         IF @ProfileID = 1
             BEGIN
+
+
+			    -- your code goes here
                 PRINT 'privet';
+
+
+
             END;
-
-
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0

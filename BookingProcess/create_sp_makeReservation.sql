@@ -11,90 +11,91 @@
 ---- check in = INHOUSE
 ---- check out = CHKOUT
 
-ALTER PROCEDURE [dbo].[sp_epi_make_reservation]
+CREATE PROCEDURE [dbo].[sp_epi_make_reservation]
 -- HMS Interface: make a reservation for a guest
 --input parameters for the SP
-    @ProfileID INT ,
+    @ProfileID INT,
     @CheckInDate DATETIME = '20160705' ,
     @CheckOutDate DATETIME = '20160706' ,
     @RatePlanCode NVARCHAR(6) = N'HIGH1' ,
     @RoomTypeCode NVARCHAR(6) = N'SRTS' ,
-    @SourceCode NVARCHAR(6) = N'CALL' ,
-    @GuaranteeCode NVARCHAR(6) = N'6PM'
+    @GuaranteeCode NVARCHAR(6) = N'6PM' ,
+    @SourceCode NVARCHAR(6) = N'CALL'
 AS
     BEGIN TRAN;
     BEGIN TRY
-	-- do not expose this parameters
-        DECLARE @TotalRoomRevenue DECIMAL;
-        DECLARE @ReservationStayID INT;
-        DECLARE @ReservationID INT;
-        DECLARE @AccountID INT;
-        DECLARE @TrackingNumber NVARCHAR(64);
-        DECLARE @PropertyCode NVARCHAR(4);
-        DECLARE @GuestCount INT;
-        DECLARE @CancellationPolicyID INT;
-        DECLARE @PropertyRatePlanID INT; 
-        DECLARE @RoomTypeID INT;
-        DECLARE @MarketSegmentCode NVARCHAR(6);
-        DECLARE @Nights INT;  -- number of night guest stays
-        DECLARE @CreatedBy NVARCHAR(10);  -- who created the row
-    -- guest name
-        DECLARE @FullName NVARCHAR(102);
-        DECLARE @FirstName NVARCHAR(102);
-        DECLARE @LastName NVARCHAR(102);
-        DECLARE @AdultCount TINYINT;
-        DECLARE @StatusCode NVARCHAR(15); -- N'CONFIRMED';
-        DECLARE @NameInfoID INT;
-        DECLARE @nowDate DATETIME;
-        SET @AdultCount = 1;
-        SET @TotalRoomRevenue = 500; -- TODO map to actual data
-        SET @nowDate = ( SELECT GETDATE()
-                       );
-
-
-        SET @NameInfoID = ( SELECT  NameInfoID
-                            FROM    dbo.NameInfo
-                            WHERE   ProfileID = @ProfileID
-                          );
-    
-        SET @StatusCode = N'CONFIRMED';
-	
-        SET @FullName = ( SELECT    LastName + ', ' + FirstName
-                          FROM      dbo.NameInfo
-                          WHERE     ProfileID = @ProfileID
-                        );
-        SET @FirstName = ( SELECT   FirstName
-                           FROM     dbo.NameInfo
-                           WHERE    ProfileID = @ProfileID
-                         );
-        SET @LastName = ( SELECT    LastName
-                          FROM      dbo.NameInfo
-                          WHERE     ProfileID = @ProfileID
-                        );	
-        SET @Nights = DATEDIFF(dd, @CheckInDate, @CheckOutDate);
-        SET @CreatedBy = N'R5';
-        SET @CancellationPolicyID = 8;  -- need actual mapping for this
-        SET @GuestCount = 1;  -- 1 is always acceptable
-        SET @PropertyCode = N'VEGA';
-        SET @PropertyRatePlanID = ( SELECT  PropertyRatePlanID
-                                    FROM    dbo.PropertyRatePlan
-                                    WHERE   RatePlanCode = @RatePlanCode
-                                  );
-        SET @RoomTypeID = ( SELECT  RoomTypeID
-                            FROM    dbo.RoomType
-                            WHERE   RoomTypeCode = @RoomTypeCode
-                          );
-
-        SET @MarketSegmentCode = ( SELECT   CategoryCodeValue
-                                   FROM     dbo.RatePlan
-                                   WHERE    RatePlanCode = @RatePlanCode
-                                 );
- --depends on room type!
-
         IF NOT EXISTS ( SELECT  GuestProfileID
                         FROM    Reservation
                         WHERE   GuestProfileID = @ProfileID )--check if reservation was made previously
             BEGIN
+	-- do not expose this parameters
+                DECLARE @TotalRoomRevenue DECIMAL;
+                DECLARE @ReservationStayID INT;
+                DECLARE @ReservationID INT;
+                DECLARE @AccountID INT;
+                DECLARE @TrackingNumber NVARCHAR(64);
+                DECLARE @PropertyCode NVARCHAR(4);
+                DECLARE @GuestCount INT;
+                DECLARE @CancellationPolicyID INT;
+                DECLARE @PropertyRatePlanID INT; 
+                DECLARE @RoomTypeID INT;
+                DECLARE @MarketSegmentCode NVARCHAR(6);
+                DECLARE @Nights INT;  -- number of night guest stays
+                DECLARE @CreatedBy NVARCHAR(10);  -- who created the row
+    -- guest name
+                DECLARE @FullName NVARCHAR(102);
+                DECLARE @FirstName NVARCHAR(102);
+                DECLARE @LastName NVARCHAR(102);
+                DECLARE @AdultCount TINYINT;
+                DECLARE @StatusCode NVARCHAR(15); -- N'CONFIRMED';
+                DECLARE @NameInfoID INT;
+                DECLARE @nowDate DATETIME;
+                SET @AdultCount = 1;
+                SET @TotalRoomRevenue = 500; -- TODO map to actual data
+                SET @nowDate = ( SELECT GETDATE()
+                               );
+
+
+                SET @NameInfoID = ( SELECT  NameInfoID
+                                    FROM    dbo.NameInfo
+                                    WHERE   ProfileID = @ProfileID
+                                  );
+    
+                SET @StatusCode = N'CONFIRMED';
+	
+                SET @FullName = ( SELECT    LastName + ', ' + FirstName
+                                  FROM      dbo.NameInfo
+                                  WHERE     ProfileID = @ProfileID
+                                );
+                SET @FirstName = ( SELECT   FirstName
+                                   FROM     dbo.NameInfo
+                                   WHERE    ProfileID = @ProfileID
+                                 );
+                SET @LastName = ( SELECT    LastName
+                                  FROM      dbo.NameInfo
+                                  WHERE     ProfileID = @ProfileID
+                                );	
+                SET @Nights = DATEDIFF(dd, @CheckInDate, @CheckOutDate);
+                SET @CreatedBy = N'R5';
+                SET @CancellationPolicyID = 8;  -- need actual mapping for this
+                SET @GuestCount = 1;  -- 1 is always acceptable
+                SET @PropertyCode = N'VEGA';
+                SET @PropertyRatePlanID = ( SELECT  PropertyRatePlanID
+                                            FROM    dbo.PropertyRatePlan
+                                            WHERE   RatePlanCode = @RatePlanCode
+                                          );
+                SET @RoomTypeID = ( SELECT  RoomTypeID
+                                    FROM    dbo.RoomType
+                                    WHERE   RoomTypeCode = @RoomTypeCode
+                                  );
+
+                SET @MarketSegmentCode = ( SELECT   CategoryCodeValue
+                                           FROM     dbo.RatePlan
+                                           WHERE    RatePlanCode = @RatePlanCode
+                                         );
+ --depends on room type!
+
+
 			-- randomly generate 8 figures number
                 SET @TrackingNumber = ( SELECT  CONVERT(NUMERIC(8, 0), RAND() * 89999999) + 10000000
                                       );
