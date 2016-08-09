@@ -55,7 +55,7 @@ SET     RoomID = @RoomID -- room id
 WHERE   ReservationStayID = @ReservationStayID;
 
 UPDATE  dbo.P5RESERVATIONSTAY
-SET     RSY_CURRENTROOMCODE = @RoomCode -- room number -- actual room number is needed
+SET     RSY_CURRENTROOMCODE = @RoomCode -- room number (an actual room number not the ID)
 WHERE   RSY_RESERVATIONSTAYID = @ReservationStayID;
 
 EXEC dbo.prc_RoomBlockLock @ReservationStayID;

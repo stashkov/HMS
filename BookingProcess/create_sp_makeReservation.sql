@@ -1147,7 +1147,8 @@ AS
 
 
                 SELECT  @ReservationStayID AS ReservationStayID ,
-                        @ReservationID AS ReservationID;
+                        @ReservationID AS ReservationID,
+						@TrackingNumber AS TrackingNumber
             END;
     END TRY
     BEGIN CATCH
