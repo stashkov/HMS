@@ -55,9 +55,16 @@ SET @MarketSegmentCode = ( SELECT   CategoryCodeValue
 SET @Nights = DATEDIFF(dd, @CheckInDate, @CheckOutDate);
 SET @CreatedBy = N'R5';
 ----randomly generate 8 figures number
-SET @TrackingNumber = ( SELECT  CONVERT(NUMERIC(8, 0), RAND() * 89999999)
-                                + 10000000
-                      );  -- TODO check if tracking number already exist in the table TrackingNumber
+SET @TrackingNumber = ( SELECT  CONVERT(NUMERIC(8, 0), RAND() * 89999999) + 10000000
+                      );
+-- if alredy exists in the table generate a new one
+WHILE @TrackingNumber IN ( SELECT   TrackingNumber
+                           FROM     dbo.TrackingNumber )
+    BEGIN
+        SET @TrackingNumber = ( SELECT  CONVERT(NUMERIC(8, 0), RAND() * 89999999) + 10000000
+                              );
+    END;
+
   
 
 SET @NameInfoID = ( SELECT  NameInfoID
@@ -101,6 +108,19 @@ VALUES  ( @TrackingNumber , -- TrackingNumber - nvarchar(64)
           N'system' , -- CreatedBy - nvarchar(50) --can be manual
           GETDATE()  -- CreatedOn - datetime
         );
+
+
+SELECT ReservationID, GuestProfileID, StatusCode, ConfirmationNumber, UpdatedOn
+FROM dbo.Reservation
+ORDER BY UpdatedOn DESC
+
+SELECT *
+FROM dbo.Profile
+
+-- make reservation - CONFIRMED
+-- assign room - CONFIRMED
+-- check in = INHOUSE
+-- check out = CHKOUT
 
 INSERT  INTO dbo.Reservation
         ( ChannelCode ,

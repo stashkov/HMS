@@ -45,3 +45,10 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# sql server solution files
+*.ssmssln
+*.ssms_suo
+*.ssmssqlproj
+*.xel
+
