@@ -26,6 +26,7 @@ AS
 
 			
                 DECLARE @CreatedBy NVARCHAR(10);
+
                 DECLARE @nowDate DATETIME;
                 DECLARE @PropertyCode NVARCHAR(4);
                 DECLARE @RoomID INT;

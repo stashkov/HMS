@@ -14,6 +14,14 @@ AS
     BEGIN TRAN;
     BEGIN TRY
 		-- check if resrvation exists, and status is reserved, and room is not null, then we can CHECK IN
+        DECLARE @RoomID INT;
+
+
+        SET @RoomID = ( SELECT  RoomID
+                        FROM    dbo.ReservationStayDate
+                        WHERE   ReservationStayID = @ReservationStayID
+                                AND StayDate = @CheckInDate  --primary key composite field of 2
+                      );
         IF EXISTS ( SELECT  ReservationStayID
                     FROM    ReservationStay
                     WHERE   ReservationStayID = @ReservationStayID )
@@ -37,14 +45,7 @@ AS
                 DECLARE @PropertyCode NVARCHAR(4);
                 DECLARE @EVENT_ID NVARCHAR(64);
 
-                DECLARE @RoomID INT;
 
-
-                SET @RoomID = ( SELECT  RoomID
-                                FROM    dbo.ReservationStayDate
-                                WHERE   ReservationStayID = @ReservationStayID
-                                        AND StayDate = @CheckInDate  --primary key composite field of 2
-                              );
                 SET @CreatedBy = N'R5';
                 SET @nowDate = GETDATE();
                 SET @PropertyCode = N'VEGA';
@@ -72,18 +73,18 @@ AS
 
 
                 EXEC dbo.prc_UpdateGuestStaySummary @guestProfileID = @ProfileID, -- int
-                    @ReservationStayID = @ReservationStayID, -- int
+                    @reservationStayId = @ReservationStayID, -- int
                     @username = @CreatedBy, -- nvarchar(50)
                     @updatedOn = @nowDate;
 
-                EXEC dbo.prc_UpdateGuestStayStatistics @ProfileID = @ProfileID, -- int
+                EXEC dbo.prc_UpdateGuestStayStatistics @profileID = @ProfileID, -- int
                     @customerID = N'1', -- nvarchar(50)
                     @isActualRecord = 1, -- tinyint
                     @propertyCode = @PropertyCode, -- nvarchar(15)
                     @username = @CreatedBy, -- varchar(30)
                     @updatedOn = @nowDate;
 
-                EXEC dbo.prc_UpdateGuestStayStatistics @ProfileID = @ProfileID, -- int
+                EXEC dbo.prc_UpdateGuestStayStatistics @profileID = @ProfileID, -- int
                     @customerID = N'1', -- nvarchar(50)
                     @isActualRecord = 0, -- tinyint
                     @propertyCode = @PropertyCode, -- nvarchar(15)

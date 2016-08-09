@@ -1,3 +1,6 @@
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
 --SELECT  ReservationID ,
 --        GuestProfileID ,
 --        StatusCode ,
@@ -14,14 +17,30 @@
 CREATE PROCEDURE [dbo].[sp_epi_make_reservation]
 -- HMS Interface: make a reservation for a guest
 --input parameters for the SP
-    @ProfileID INT,
-    @CheckInDate DATETIME = '20160705' ,
-    @CheckOutDate DATETIME = '20160706' ,
-    @RatePlanCode NVARCHAR(6) = N'HIGH1' ,
-    @RoomTypeCode NVARCHAR(6) = N'SRTS' ,
-    @GuaranteeCode NVARCHAR(6) = N'6PM' ,
-    @SourceCode NVARCHAR(6) = N'CALL'
-AS
+    @ProfileID INT ,
+    @CheckInDate DATETIME ,
+    @CheckOutDate DATETIME ,
+    @RatePlanCode NVARCHAR(6) = 'HIGH1' ,
+    @RoomTypeCode NVARCHAR(6) = 'SRTS' ,
+    @GuaranteeCode NVARCHAR(6) = '6PM' ,
+    @SourceCode NVARCHAR(6) = 'CALL' ,
+    @ReservationStayID INT = NULL OUT ,
+    @ReservationID INT = NULL OUT ,
+    @TrackingNumber NVARCHAR(64) = NULL OUT
+AS -- check if any of parameters are NULL
+    IF @ProfileID IS NULL
+        OR @CheckInDate IS NULL
+        OR @CheckOutDate IS NULL
+        OR @RatePlanCode IS NULL
+        OR @RoomTypeCode IS NULL
+        OR @GuaranteeCode IS NULL
+        OR @SourceCode IS NULL
+        BEGIN	
+            DECLARE @err_message NVARCHAR(255);
+            SET @err_message = 'All parameters (except ReservationStayID, ReservationID, TrackingNumber )must be non-empty values';
+            RAISERROR (@err_message, 11,1);
+            RETURN;
+        END;
     BEGIN TRAN;
     BEGIN TRY
         IF NOT EXISTS ( SELECT  GuestProfileID
@@ -30,10 +49,7 @@ AS
             BEGIN
 	-- do not expose this parameters
                 DECLARE @TotalRoomRevenue DECIMAL;
-                DECLARE @ReservationStayID INT;
-                DECLARE @ReservationID INT;
                 DECLARE @AccountID INT;
-                DECLARE @TrackingNumber NVARCHAR(64);
                 DECLARE @PropertyCode NVARCHAR(4);
                 DECLARE @GuestCount INT;
                 DECLARE @CancellationPolicyID INT;
@@ -832,18 +848,18 @@ AS
 
 
                 EXEC dbo.prc_UpdateGuestStaySummary @guestProfileID = @ProfileID, -- int
-                    @reservationStayId = @ReservationStayID, -- int
+                    @ReservationStayID = @ReservationStayID, -- int
                     @username = N'R5', -- nvarchar(50)
                     @updatedOn = @nowDate;
 
-                EXEC dbo.prc_UpdateGuestStayStatistics @profileID = @ProfileID, -- int
+                EXEC dbo.prc_UpdateGuestStayStatistics @ProfileID = @ProfileID, -- int
                     @customerID = N'1', -- nvarchar(50)
                     @isActualRecord = 1, -- tinyint
                     @propertyCode = @PropertyCode, -- nvarchar(15)
                     @username = 'R5', -- varchar(30)
                     @updatedOn = @nowDate;
 
-                EXEC dbo.prc_UpdateGuestStayStatistics @profileID = @ProfileID, -- int
+                EXEC dbo.prc_UpdateGuestStayStatistics @ProfileID = @ProfileID, -- int
                     @customerID = N'1', -- nvarchar(50)
                     @isActualRecord = 0, -- tinyint
                     @propertyCode = @PropertyCode, -- nvarchar(15)
@@ -1147,9 +1163,9 @@ AS
             
 
 
-                SELECT  @ReservationStayID AS ReservationStayID ,
-                        @ReservationID AS ReservationID ,
-                        @TrackingNumber AS TrackingNumber;
+                --SELECT  @ReservationStayID AS ReservationStayID ,
+                --        @ReservationID AS ReservationID ,
+                --        @TrackingNumber AS TrackingNumber;
             END;
     END TRY
     BEGIN CATCH
@@ -1164,4 +1180,7 @@ AS
         COMMIT;
 
 
+
+
 GO
+
