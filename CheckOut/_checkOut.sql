@@ -52,7 +52,7 @@ UPDATE  dbo.ReservationStay
 SET     StatusCode = N'CHKOUT' ,
         PMSStatusCode = N'CHKOUT' ,
         UpdatedOn = GETDATE() ,
-		--DepartureDate = @CheckOutDate, -- if the original departure date has changedW
+    --DepartureDate = @CheckOutDate, -- if the original departure date has changedW
         UpdatedBy = @CreatedBy
 WHERE   ReservationStayID = @ReservationStayID;
   -- primary key
@@ -95,7 +95,7 @@ WHERE   EVT_ROOM = @RoomID
 UPDATE  dbo.P5ACCOUNT
 SET     ACC_STATUS = 'CLOSED' ,
         ACC_UPDATED = GETDATE() ,
-		--ACC_ENDDATE = checkoutdate  -- if needed to change checkout date
+    --ACC_ENDDATE = checkoutdate  -- if needed to change checkout date
         ACC_UPDATEDBY = @CreatedBy
 WHERE   ACC_ACCOUNTID = @ReservationStayID  -- not a PK but looks like this is enough to identify (actual PK is surrogate in this case)
         AND ACC_STARTDATE = @CheckInDate;
@@ -114,7 +114,7 @@ WHERE   RMS_PROPERTY = @PropertyCode
 
 
 
-INSERT INTO dbo.P5ACTIONHISTORY
+INSERT  INTO dbo.P5ACTIONHISTORY
         ( ACT_RESERVATIONSTAYID ,
           ACT_PMSCONFIRMATIONNUMBER ,
           ACT_PROPERTYCODE ,
@@ -134,4 +134,4 @@ VALUES  ( @ReservationStayID , -- ACT_RESERVATIONSTAYID - int
           @CreatedBy , -- ACT_CREATEDBY - nvarchar(30)
           GETDATE() , -- ACT_CREATED - datetime
           0  -- ACT_UPDATECOUNT - numeric
-        )
+        );
