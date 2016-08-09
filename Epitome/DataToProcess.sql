@@ -62,5 +62,7 @@
 SELECT  *
 FROM    logs.dictionary;
 
+SELECT *
+FROM logs.errors
 
 
