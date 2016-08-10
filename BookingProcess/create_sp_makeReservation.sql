@@ -43,6 +43,19 @@ AS -- check if any of parameters are NULL
         END;
     BEGIN TRAN;
     BEGIN TRY
+        IF EXISTS ( SELECT  GuestProfileID
+                    FROM    Reservation
+                    WHERE   GuestProfileID = @ProfileID )
+            BEGIN 
+                SELECT  @TrackingNumber = ConfirmationNumber ,
+                        @ReservationID = r.ReservationID ,
+                        @ReservationStayID = rs.ReservationStayID
+                FROM    dbo.Reservation r
+                        INNER JOIN dbo.ReservationStay rs ON r.ReservationID = rs.ReservationID
+                WHERE   GuestProfileID = @ProfileID;
+            END;
+        
+
         IF NOT EXISTS ( SELECT  GuestProfileID
                         FROM    Reservation
                         WHERE   GuestProfileID = @ProfileID )--check if reservation was made previously
