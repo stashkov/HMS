@@ -13,10 +13,9 @@ CREATE TABLE logs.errors
       ReservationStayID INT ,
       TrackingNumber NVARCHAR(64),
 	  RoomNumber VARCHAR(10),
-	  Status VARCHAR(10),  -- add derived column and convert this to nvarchar
+	  Status NVARCHAR(1), 
 	  Executed_on DATETIME,
 	  ErrorCode INT,
 	  ErrorColumn NVARCHAR(500)
-
-
     );
+
