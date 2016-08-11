@@ -2,7 +2,7 @@
 --1 
 USE [master]
 ALTER DATABASE [VEGAUAT] SET SINGLE_USER WITH ROLLBACK IMMEDIATE
-RESTORE DATABASE [VEGAUAT] FROM  DISK = N'D:\Backup\VEGAUAT.bak' WITH  FILE = 1,  NOUNLOAD,  REPLACE,  STATS = 5
+RESTORE DATABASE [VEGAUAT] FROM  DISK = N'D:\Backup\VEGAUAT_4AM.bak' WITH  FILE = 1,  NOUNLOAD,  REPLACE,  STATS = 5
 ALTER DATABASE [VEGAUAT] SET MULTI_USER
 
 GO
@@ -20,3 +20,7 @@ GO
 -- restart HMS Application Server
 
 
+:r D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_assign_room.sql
+:r D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_check_in.sql
+:r D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_check_out.sql
+:r D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_makeReservation.sql
