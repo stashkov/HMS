@@ -1,3 +1,5 @@
+USE VEGAUAT
+GO
 CREATE PROCEDURE [dbo].[sp_epi_check_out]
 --input parameters for the SP
     @ProfileID INT ,

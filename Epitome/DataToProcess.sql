@@ -7,9 +7,11 @@
     --@GuaranteeCode NVARCHAR(6) = N'6PM' ,
     --@SourceCode NVARCHAR(6) = N'CALL'
 
+	use hotel
+	GO
 
     SELECT DISTINCT
-            c.profileid_hms AS ProfileID ,
+            --c.profileid_hms AS ProfileID ,
             g.arrival AS CheckIn ,
             g.departure AS CheckOut ,
 	        
@@ -25,18 +27,18 @@
 			--g.source AS SourceOfBusiness ,
             d.HMSCode AS SourceOfBusiness ,
             g.room AS RoomNumber ,
-            g.status,
+            g.status
+			,d4.HMSCode AS [Status]
             --g.cxl_code AS cancelcode,
 			--g.property AS Property ,
-			c.ConfirmationNumber AS TrackingNumber,
-			c.ReservationID AS ReservationID,
-			c.ReservationStayID AS ReservationStayID,
-			c.executed_on
-		
-
-		 --g.account 
+			---c.ConfirmationNumber AS TrackingNumber,
+			---c.ReservationID AS ReservationID,
+			---c.ReservationStayID AS ReservationStayID,
+			---c.executed_on
+			--,g.cxl_code
+		    --g.account 
     FROM    dbo.guest g
-            INNER JOIN logs.clients c ON g.account = c.account_epitome
+            --INNER JOIN logs.clients c ON g.account = c.account_epitome
             INNER JOIN logs.dictionary d ON d.EpitomeCode = g.source
                                             AND d.Type = N'SourceOfBusiness'
             INNER JOIN logs.dictionary d1 ON d1.EpitomeCode = g.room_type
@@ -45,24 +47,14 @@
                                              AND d2.Type = 'RateCode'
             INNER JOIN logs.dictionary d3 ON d3.EpitomeCode = g.gtd
                                              AND d3.Type = 'GuaranteeType'
-    WHERE   g.status <> 'P'  -- permament
-            AND g.status <> 'C'  -- cancelled
-            AND g.status <> 'N'  -- noshow
-            AND g.status <> 'W'  -- wait
-          --AND g.room IS NOT NULL
-		  --exclude cancelled
-            AND g.cxl_code IS NULL;
+            INNER JOIN logs.dictionary d4 ON d4.EpitomeCode = g.status
+                                             AND d4.Type = 'Status'
+    WHERE   g.status NOT IN ('P', 'W')-- permament, wait
+            --AND g.status <> 'C'  -- cancelled
+            --AND g.status <> 'N'  -- noshow (cancelled)
+            AND g.cxl_code IS NULL -- cancelled during check out 
  
 
+ 
 
- SELECT *
- FROM logs.clients
-
-
-SELECT  *
-FROM    logs.dictionary;
-
-SELECT *
-FROM logs.errors
-
-
+ 

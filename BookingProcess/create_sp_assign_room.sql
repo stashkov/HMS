@@ -1,3 +1,5 @@
+USE VEGAUAT
+GO
 CREATE PROCEDURE [dbo].[sp_epi_assign_room]
 -- HMS Interface: assign a room
     @ProfileID INT ,

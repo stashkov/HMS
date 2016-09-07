@@ -7,6 +7,18 @@ GO
 INSERT  INTO logs.dictionary
         ( Type, EpitomeCode, HMSCode )
 VALUES  ( N'Status', N'O', N'CheckedOut' );
+INSERT  INTO logs.dictionary
+        ( Type, EpitomeCode, HMSCode )
+VALUES  ( N'Status', N'C', N'Cancelled' );
+INSERT  INTO logs.dictionary
+        ( Type, EpitomeCode, HMSCode )
+VALUES  ( N'Status', N'R', N'Reserved' );
+INSERT  INTO logs.dictionary
+        ( Type, EpitomeCode, HMSCode )
+VALUES  ( N'Status', N'N', N'Cancelled' );
+INSERT  INTO logs.dictionary
+        ( Type, EpitomeCode, HMSCode )
+VALUES  ( N'Status', N'I', N'CheckedIn' );
 
 --RoomType
 INSERT  INTO logs.dictionary
@@ -424,8 +436,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'AMERICAN EXPRESS' ,
-          N'AMERICAN EXPRESS'
+          N'AMEX' ,
+          N'AMEX'
         );
 INSERT  INTO logs.dictionary
         ( Type ,
@@ -442,8 +454,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'????????? ?????' ,
-          N'????????? ?????'
+          N'CC' ,
+          N'CC'
         );
 INSERT  INTO logs.dictionary
         ( Type ,
@@ -451,8 +463,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'??????????' ,
-          N'??????????'
+          N'DB' ,
+          N'DB'
         );
 INSERT  INTO logs.dictionary
         ( Type ,
@@ -460,8 +472,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'DINERS' ,
-          N'DINERS'
+          N'DIN' ,
+          N'DIN'
         );
 INSERT  INTO logs.dictionary
         ( Type ,
@@ -469,8 +481,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'MANAGER GUARANTE' ,
-          N'MANAGER GUARANTE'
+          N'MNGR' ,
+          N'MNGR'
         );
 INSERT  INTO logs.dictionary
         ( Type ,
@@ -478,8 +490,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'UNION' ,
-          N'UNION'
+          N'UN' ,
+          N'UN'
         );
 INSERT  INTO logs.dictionary
         ( Type ,
@@ -496,8 +508,8 @@ INSERT  INTO logs.dictionary
           HMSCode
         )
 VALUES  ( N'GuaranteeType' ,
-          N'MASTERCARD' ,
-          N'MASTERCARD'
+          N'MC' ,
+          N'MC'
         );
 --SourceOfBusiness
 INSERT  INTO logs.dictionary
