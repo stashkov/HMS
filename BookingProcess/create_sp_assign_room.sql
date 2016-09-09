@@ -1,5 +1,6 @@
 USE VEGAUAT
 GO
+
 CREATE PROCEDURE [dbo].[sp_epi_assign_room]
 -- HMS Interface: assign a room
     @ProfileID INT ,
@@ -22,7 +23,7 @@ AS
                                 AND ROO_PROPERTYCODE = @PropertyCode
                       );
 		--check if a room is already specified for this ReservationStayID
-        IF EXISTS ( SELECT  RoomID
+        IF NOT EXISTS ( SELECT  RoomID
                     FROM    ReservationStayDate
                     WHERE   ReservationStayID = @ReservationStayID
                             AND RoomID = @RoomID )
@@ -41,7 +42,7 @@ AS
                                   WHERE     ProfileID = @ProfileID
                                 );
 
-                SET @EVENT_ID = ( SELECT    CAST(MAX(EVT_EVENTID) + 1 AS NVARCHAR)
+                SET @EVENT_ID = ( SELECT    CAST(ISNULL(MAX(CAST(EVT_EVENTID AS INT)), 0) + 1 AS NVARCHAR)
                                   FROM      dbo.P5ROOMBLOCKINGEVENTS  -- documentation says Sequence key of events (maybe PK?)
                                 );
 								

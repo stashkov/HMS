@@ -10,8 +10,10 @@
 	use hotel
 	GO
 
-    SELECT DISTINCT
+    SELECT
             --c.profileid_hms AS ProfileID ,
+		  g.account AS account,
+
             g.arrival AS CheckIn ,
             g.departure AS CheckOut ,
 	        
@@ -49,12 +51,16 @@
                                              AND d3.Type = 'GuaranteeType'
             INNER JOIN logs.dictionary d4 ON d4.EpitomeCode = g.status
                                              AND d4.Type = 'Status'
-    WHERE   g.status NOT IN ('P', 'W')-- permament, wait
-            --AND g.status <> 'C'  -- cancelled
-            --AND g.status <> 'N'  -- noshow (cancelled)
+    WHERE   --g.status NOT IN ('P', 'W', 'O', 'N', 'C')-- permament, wait
+		  g.status IN ('I', 'R')
             AND g.cxl_code IS NULL -- cancelled during check out 
  
-
- 
+-- 'P' PERMAMENT
+-- 'W' WAITLIST
+-- 'O' CHECKED OUT
+-- 'N' NOSHOW
+-- 'C' CANCELLED
+-- 'I' CHECKED IN
+-- 'R' REGISTERED
 
  
