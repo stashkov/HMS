@@ -1009,7 +1009,7 @@ AS -- check if any of parameters are NULL
                           ACC_BRANCHID ,
                           ACC_BRANCHNAME
                         )
-                VALUES  ( ( SELECT  MAX(CAST(ACC_ACCOUNT AS INT)) + 1
+                VALUES  ( ( SELECT  ISNULL(MAX(CAST(ACC_ACCOUNT AS INT)), 0) + 1
                             FROM    dbo.P5ACCOUNT
                           ) , -- ACC_ACCOUNT - nvarchar(30)  --- unique ID for this table (from HMS documentation)
                           @PropertyCode , -- ACC_PROPERTY - nvarchar(15)
