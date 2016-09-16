@@ -3,77 +3,66 @@ GO
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
---SELECT  ReservationID ,
---        GuestProfileID ,
---        StatusCode ,
---        ConfirmationNumber ,
---        UpdatedOn
---FROM    dbo.Reservation
---ORDER BY UpdatedOn DESC;
-
----- make reservation - CONFIRMED
----- assign room - CONFIRMED
+-------------------------------------------
+---- workflow against different statuses
+---- make reservation = CONFIRMED
+---- assign room = CONFIRMED
 ---- check in = INHOUSE
 ---- check out = CHKOUT
-
+-------------------------------------------
+--DROP PROCEDURE [dbo].[sp_epi_make_reservation]
 CREATE PROCEDURE [dbo].[sp_epi_make_reservation]
 -- HMS Interface: make a reservation for a guest
---input parameters for the SP
     @ProfileID INT ,
     @CheckInDate DATETIME ,
     @CheckOutDate DATETIME ,
-    @RatePlanCode NVARCHAR(6) = 'HIGH1' ,
-    @RoomTypeCode NVARCHAR(6) = 'SRTS' ,
-    @GuaranteeCode NVARCHAR(6) = '6PM' ,
-    @SourceCode NVARCHAR(6) = 'CALL' ,
+    @RatePlanCode NVARCHAR(6) ,-- 'HIGH1' 
+    @RoomTypeCode NVARCHAR(6) ,-- 'SRTS' 
+    @GuaranteeCode NVARCHAR(6) ,-- 'CASH' 
+    @SourceCode NVARCHAR(6) ,-- 'CALL' 
     @ReservationStayID INT = NULL OUT ,
     @ReservationID INT = NULL OUT ,
     @TrackingNumber NVARCHAR(64) = NULL OUT
-AS -- check if any of parameters are NULL
-    IF @ProfileID IS NULL
-        OR @CheckInDate IS NULL
-        OR @CheckOutDate IS NULL
-        OR @RatePlanCode IS NULL
-        OR @RoomTypeCode IS NULL
-        OR @GuaranteeCode IS NULL
-        OR @SourceCode IS NULL
-        BEGIN	
-            DECLARE @err_message NVARCHAR(255);
-            SET @err_message = 'All parameters (except ReservationStayID, ReservationID, TrackingNumber )must be non-empty values';
-            RAISERROR (@err_message, 11,1);
-            RETURN;
-        END;
-    BEGIN TRAN;
+AS
     BEGIN TRY
-        IF EXISTS ( SELECT  GuestProfileID
-                    FROM    Reservation
-                    WHERE   GuestProfileID = @ProfileID )
-            BEGIN 
+    -- if reservation row already exists, return info about it 
+        IF EXISTS ( SELECT  ProfileID
+                    FROM    dbo.ReservationStay
+                    WHERE   ProfileID = @ProfileID
+					   AND ArrivalDate = @CheckInDate
+					   AND DepartureDate = @CheckOutDate )
+            BEGIN
                 SELECT  @TrackingNumber = ConfirmationNumber ,
                         @ReservationID = r.ReservationID ,
                         @ReservationStayID = rs.ReservationStayID
                 FROM    dbo.Reservation r
                         INNER JOIN dbo.ReservationStay rs ON r.ReservationID = rs.ReservationID
                 WHERE   GuestProfileID = @ProfileID;
-            END;
-        
-
-        IF NOT EXISTS ( SELECT  GuestProfileID
-                        FROM    Reservation
-                        WHERE   GuestProfileID = @ProfileID )--check if reservation was made previously
+			 RETURN;
+		  END;
+    -- if there is a profileID, but no reservation for it, then make it
+        IF NOT EXISTS ( SELECT  ProfileID
+				    FROM    dbo.ReservationStay
+				    WHERE   ProfileID = @ProfileID
+						  AND ArrivalDate = @CheckInDate
+						  AND DepartureDate = @CheckOutDate  )
+				    AND (
+				    SELECT ProfileID
+				    FROM dbo.[profile]
+				    WHERE ProfileID = @profileID) IS NOT NULL
             BEGIN
-	-- do not expose this parameters
+		  BEGIN TRANSACTION MAKERESERVATION
                 DECLARE @TotalRoomRevenue DECIMAL;
                 DECLARE @AccountID INT;
                 DECLARE @PropertyCode NVARCHAR(4);
                 DECLARE @GuestCount INT;
                 DECLARE @CancellationPolicyID INT;
-                DECLARE @PropertyRatePlanID INT; 
+                DECLARE @PropertyRatePlanID INT;	  
                 DECLARE @RoomTypeID INT;
                 DECLARE @MarketSegmentCode NVARCHAR(6);
                 DECLARE @Nights INT;  -- number of night guest stays
                 DECLARE @CreatedBy NVARCHAR(10);  -- who created the row
-    -- guest name
+			 -- guest name
                 DECLARE @FullName NVARCHAR(102);
                 DECLARE @FirstName NVARCHAR(102);
                 DECLARE @LastName NVARCHAR(102);
@@ -81,10 +70,10 @@ AS -- check if any of parameters are NULL
                 DECLARE @StatusCode NVARCHAR(15); -- N'CONFIRMED';
                 DECLARE @NameInfoID INT;
                 DECLARE @nowDate DATETIME;
+
                 SET @AdultCount = 1;
                 SET @TotalRoomRevenue = 500; -- TODO map to actual data
-                SET @nowDate = ( SELECT GETDATE()
-                               );
+                SET @nowDate = ( SELECT GETDATE() );
 
 
                 SET @NameInfoID = ( SELECT  NameInfoID
@@ -413,7 +402,7 @@ AS -- check if any of parameters are NULL
                           0 , -- DoNotMove - tinyint
                           NULL , -- IsRegistrationCardPrinted - tinyint
                           1 , -- IsGuestStay - tinyint
-                          N'100' , -- SettlementTypeCode - nvarchar(6)
+                          NULL , -- SettlementTypeCode - nvarchar(6)
                           NULL , -- SettledByCreditCardID - int
                           NULL , -- CreditCardID - int
                           NULL , -- EmailAddressID - int
@@ -423,7 +412,7 @@ AS -- check if any of parameters are NULL
                           0 , -- IsTaxExempt - tinyint
                           @SourceCode , -- SourceCode - nvarchar(6)
                           @MarketSegmentCode , -- MarketSegmentCode - nvarchar(6)
-                          NULL , -- Notes - nvarchar(2000)
+                          N'' , -- Notes - nvarchar(2000)
                           NULL , -- CancellationReason - nvarchar(50)
                           0 , -- IsRateSuppressed - tinyint
                           NULL , -- Caller - nvarchar(50)
@@ -509,38 +498,42 @@ AS -- check if any of parameters are NULL
                           PrePromotionRateAmount ,
                           RateTaxAmount
                         )
-                VALUES  ( @ReservationID , -- ReservationStayID - int
-                          @CheckInDate , -- StayDate - datetime
-                          @PropertyRatePlanID , -- PropertyRatePlanID - int
-                          @RatePlanCode , -- RatePlanCode - nvarchar(6)
-                          @RoomTypeID , -- RoomTypeID - int
-                          @RoomTypeCode , -- RoomTypeCode - nvarchar(6)
-                          NULL , -- RoomID - int
-                          NULL , -- PackagePlanCode - nvarchar(6)
-                          NULL , -- PromotionCode - nvarchar(10)
-                          N'BSC' , -- ReservationTypeCode - nvarchar(6)
-                          N'DY' , -- LOSScheduleCode - nvarchar(6)
-                          @TotalRoomRevenue , -- RateAmount - decimal
-                          NULL , -- RoomAmount - decimal
-                          0 , -- TaxAmount - decimal
-                          @GuestCount , -- AdultCount - int
-                          0 , -- ChildCount - int
-                          NULL , -- OriginalRateAmount - decimal
-                          NULL , -- RateOverrideReasonCode - nvarchar(6)
-                          N'HMS' , -- SourceLastUpdatedBy - nvarchar(50)
-                          GETDATE() , -- SourceLastUpdatedOn - datetime
-                          @CreatedBy , -- UpdatedBy - nvarchar(50)
-                          GETDATE() , -- UpdatedOn - datetime
-                          @CreatedBy , -- CreatedBy - nvarchar(50)
-                          GETDATE() , -- CreatedOn - datetime
-                          NULL , -- UpdateCount - numeric
-                          0 , -- ResortFee - decimal
-                          0 , -- UnroundedTaxAmount - decimal
-                          0 , -- UnroundedResortFee - decimal
-                          NULL , -- ADRDelta - decimal
-                          NULL , -- PrePromotionRateAmount - decimal
-                          0  -- RateTaxAmount - decimal
-                        );
+				    SELECT 
+					   @ReservationID , -- ReservationStayID - int
+					   DATEADD(DAY, nbr - 1, @CheckInDate) , -- StayDate - datetime
+					   @PropertyRatePlanID , -- PropertyRatePlanID - int
+					   NULL , -- RatePlanCode - nvarchar(6)
+					   @RoomTypeID , -- RoomTypeID - int
+					   @RoomTypeCode , -- RoomTypeCode - nvarchar(6)
+					   NULL , -- RoomID - int
+					   @RatePlanCode , -- PackagePlanCode - nvarchar(6)
+					   NULL , -- PromotionCode - nvarchar(10)
+					   N'BSC' , -- ReservationTypeCode - nvarchar(6)
+					   N'DY' , -- LOSScheduleCode - nvarchar(6)
+					   @TotalRoomRevenue , -- RateAmount - decimal
+					   @TotalRoomRevenue , -- RoomAmount - decimal
+					   0 , -- TaxAmount - decimal
+					   @GuestCount , -- AdultCount - int
+					   0 , -- ChildCount - int
+					   NULL , -- OriginalRateAmount - decimal
+					   NULL , -- RateOverrideReasonCode - nvarchar(6)
+					   N'HMS' , -- SourceLastUpdatedBy - nvarchar(50)
+					   GETDATE() , -- SourceLastUpdatedOn - datetime
+					   @CreatedBy , -- UpdatedBy - nvarchar(50)
+					   GETDATE() , -- UpdatedOn - datetime
+					   @CreatedBy , -- CreatedBy - nvarchar(50)
+					   GETDATE() , -- CreatedOn - datetime
+					   NULL , -- UpdateCount - numeric
+					   0 , -- ResortFee - decimal
+					   0 , -- UnroundedTaxAmount - decimal
+					   0 , -- UnroundedResortFee - decimal
+					   NULL , -- ADRDelta - decimal
+					   NULL , -- PrePromotionRateAmount - decimal
+					   0  -- RateTaxAmount - decimal
+				    FROM    ( SELECT    ROW_NUMBER() OVER ( ORDER BY c.object_id ) AS Nbr
+						    FROM      sys.columns c
+						  ) nbrs
+				    WHERE   nbr - 1 <= DATEDIFF(DAY, @CheckInDate, @CheckOutDate);
 
                 INSERT  INTO dbo.ReservationActivity
                         ( ReservationID ,
@@ -860,7 +853,7 @@ AS -- check if any of parameters are NULL
                           GETDATE()  -- RBL_UPDATEDON - datetime
                           );
 
-
+					 
 
                 EXEC dbo.prc_UpdateGuestStaySummary @guestProfileID = @ProfileID, -- int
                     @ReservationStayID = @ReservationStayID, -- int
@@ -931,6 +924,10 @@ AS -- check if any of parameters are NULL
 
 
                 SET @AccountID = SCOPE_IDENTITY();
+
+			 -- get next sequence for P5ACCOUNT table
+			 DECLARE @ACC_ACCOUNT INT
+			 EXEC dbo.GetNextSequence @sequenceAlias = N'ACC', @seqNum = @ACC_ACCOUNT OUTPUT
 
                 INSERT  INTO dbo.P5ACCOUNT
                         ( ACC_ACCOUNT ,
@@ -1009,9 +1006,10 @@ AS -- check if any of parameters are NULL
                           ACC_BRANCHID ,
                           ACC_BRANCHNAME
                         )
-                VALUES  ( ( SELECT  ISNULL(MAX(CAST(ACC_ACCOUNT AS INT)), 0) + 1
-                            FROM    dbo.P5ACCOUNT
-                          ) , -- ACC_ACCOUNT - nvarchar(30)  --- unique ID for this table (from HMS documentation)
+                VALUES  ( --( SELECT  ISNULL(MAX(CAST(ACC_ACCOUNT AS INT)), 10000) + 1
+                          --  FROM    dbo.P5ACCOUNT
+                          --) , 
+					 @ACC_ACCOUNT, -- ACC_ACCOUNT - nvarchar(30)  --- unique ID for this table (from HMS documentation)
                           @PropertyCode , -- ACC_PROPERTY - nvarchar(15)
                           N'GUEST' , -- ACC_ACCOUNTTYPE - nvarchar(6)
                           @FullName , -- ACC_ACCOUNTNAME - nvarchar(102)
@@ -1109,93 +1107,86 @@ AS -- check if any of parameters are NULL
                           RSD_ROOMTYPECHARGEUPDATEDBY ,
                           RSD_ROOMTYPECHARGEUPDATEDON
                         )
-                VALUES  ( @ReservationStayID , -- RSD_RESERVATIONSTAYID - int
-                          @CheckInDate , -- RSD_STAYDATE - datetime
-                          NULL , -- RSD_RESERVATIONSHAREWITHID - int
-                          0 , -- RSD_SHARERATEFLAG - tinyint
-                          NULL , -- RSD_FOREIGNEXCHANGE - nvarchar(6)
-                          NULL , -- RSD_PROPERTYRATEAMOUNT - numeric
-                          @CreatedBy , -- RSD_CREATEDBY - nvarchar(30)
-                          GETDATE() , -- RSD_CREATED - datetime
-                          @CreatedBy , -- RSD_UPDATEDBY - nvarchar(30)
-                          GETDATE() , -- RSD_UPDATED - datetime
-                          0 , -- RSD_UPDATECOUNT - numeric
-                          NULL , -- RSD_ROOMTYPECHARGE - nvarchar(6)
-                          NULL , -- RSD_ROOMTYPECHARGERATEREASON - nvarchar(6)
-                          NULL , -- RSD_ROOMTYPECHARGEUPDATEDBY - nvarchar(50)
-                          NULL  -- RSD_ROOMTYPECHARGEUPDATEDON - datetime
-                        );
+				    SELECT 
+					   @ReservationStayID , -- RSD_RESERVATIONSTAYID - int
+					   DATEADD(DAY, nbr - 1, @CheckInDate) , -- RSD_STAYDATE - datetime
+					   NULL , -- RSD_RESERVATIONSHAREWITHID - int
+					   0 , -- RSD_SHARERATEFLAG - tinyint
+					   NULL , -- RSD_FOREIGNEXCHANGE - nvarchar(6)
+					   NULL , -- RSD_PROPERTYRATEAMOUNT - numeric
+					   @CreatedBy , -- RSD_CREATEDBY - nvarchar(30)
+					   GETDATE() , -- RSD_CREATED - datetime
+					   @CreatedBy , -- RSD_UPDATEDBY - nvarchar(30)
+					   GETDATE() , -- RSD_UPDATED - datetime
+					   0 , -- RSD_UPDATECOUNT - numeric
+					   NULL , -- RSD_ROOMTYPECHARGE - nvarchar(6)
+					   NULL , -- RSD_ROOMTYPECHARGERATEREASON - nvarchar(6)
+					   NULL , -- RSD_ROOMTYPECHARGEUPDATEDBY - nvarchar(50)
+					   NULL  -- RSD_ROOMTYPECHARGEUPDATEDON - datetime
+				    FROM    ( SELECT    ROW_NUMBER() OVER ( ORDER BY c.object_id ) AS Nbr
+							 FROM      sys.columns c
+						  ) nbrs
+				    WHERE   nbr - 1 <= DATEDIFF(DAY, @CheckInDate, @CheckOutDate)
 
 
 
 
-                INSERT  INTO dbo.ReservationStayBookingPolicy
-                        ( ReservationStayID ,
-                          GtdBookingPolicyID ,
-                          DepositBookingPolicyID ,
-                          CancellationPolicyID ,
-                          CXLRefundPolicyID ,
-                          CreatedBy ,
-                          CreatedOn ,
-                          UpdatedBy ,
-                          UpdatedOn ,
-                          UpdateCount
-                        )
-                VALUES  ( @ReservationStayID , -- ReservationStayID - int
-                          NULL , -- GtdBookingPolicyID - int
-                          NULL , -- DepositBookingPolicyID - int
-                          @CancellationPolicyID , -- CancellationPolicyID - int  
-                          NULL , -- CXLRefundPolicyID - int
-                          @CreatedBy , -- CreatedBy - nvarchar(50)
-                          GETDATE() , -- CreatedOn - datetime
-                          @CreatedBy , -- UpdatedBy - nvarchar(50)
-                          GETDATE() , -- UpdatedOn - datetime
-                          NULL  -- UpdateCount - numeric
-                        );
+                --INSERT  INTO dbo.ReservationStayBookingPolicy
+                --        ( ReservationStayID ,
+                --          GtdBookingPolicyID ,
+                --          DepositBookingPolicyID ,
+                --          CancellationPolicyID ,
+                --          CXLRefundPolicyID ,
+                --          CreatedBy ,
+                --          CreatedOn ,
+                --          UpdatedBy ,
+                --          UpdatedOn ,
+                --          UpdateCount
+                --        )
+                --VALUES  ( @ReservationStayID , -- ReservationStayID - int
+                --          NULL , -- GtdBookingPolicyID - int
+                --          NULL , -- DepositBookingPolicyID - int
+                --          @CancellationPolicyID , -- CancellationPolicyID - int  
+                --          NULL , -- CXLRefundPolicyID - int
+                --          @CreatedBy , -- CreatedBy - nvarchar(50)
+                --          GETDATE() , -- CreatedOn - datetime
+                --          @CreatedBy , -- UpdatedBy - nvarchar(50)
+                --          GETDATE() , -- UpdatedOn - datetime
+                --          NULL  -- UpdateCount - numeric
+                --        );
 
-                INSERT  INTO dbo.ReservationBookingPolicy
-                        ( ReservationID ,
-                          GtdBookingPolicyID ,
-                          DepositBookingPolicyID ,
-                          CancellationPolicyID ,
-                          CXLRefundPolicyID ,
-                          CreatedBy ,
-                          CreatedOn ,
-                          UpdatedBy ,
-                          UpdatedOn
-                        )
-                VALUES  ( @ReservationID , -- ReservationID - int
-                          NULL , -- GtdBookingPolicyID - int
-                          NULL , -- DepositBookingPolicyID - int
-                          @CancellationPolicyID , -- CancellationPolicyID - int
-                          NULL , -- CXLRefundPolicyID - int
-                          @CreatedBy , -- CreatedBy - nvarchar(50)
-                          GETDATE() , -- CreatedOn - datetime
-                          @CreatedBy , -- UpdatedBy - nvarchar(50)
-                          GETDATE()  -- UpdatedOn - datetime
-                        );
-
-            
-
-
-                --SELECT  @ReservationStayID AS ReservationStayID ,
-                --        @ReservationID AS ReservationID ,
-                --        @TrackingNumber AS TrackingNumber;
-            END;
+                --INSERT  INTO dbo.ReservationBookingPolicy
+                --        ( ReservationID ,
+                --          GtdBookingPolicyID ,
+                --          DepositBookingPolicyID ,
+                --          CancellationPolicyID ,
+                --          CXLRefundPolicyID ,
+                --          CreatedBy ,
+                --          CreatedOn ,
+                --          UpdatedBy ,
+                --          UpdatedOn
+                --        )
+                --VALUES  ( @ReservationID , -- ReservationID - int
+                --          NULL , -- GtdBookingPolicyID - int
+                --          NULL , -- DepositBookingPolicyID - int
+                --          @CancellationPolicyID , -- CancellationPolicyID - int
+                --          NULL , -- CXLRefundPolicyID - int
+                --          @CreatedBy , -- CreatedBy - nvarchar(50)
+                --          GETDATE() , -- CreatedOn - datetime
+                --          @CreatedBy , -- UpdatedBy - nvarchar(50)
+                --          GETDATE()  -- UpdatedOn - datetime
+                --        );
+            COMMIT TRANSACTION MAKERESERVATION
+		  END;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
-            SELECT  @ProfileID AS ProfileID ,
-                    ERROR_NUMBER() AS ErrorNumber ,
-                    ERROR_MESSAGE() AS ErrorMessage;  
-        ROLLBACK;
+	   BEGIN
+		  SELECT  @ProfileID AS ProfileID ,
+				ERROR_NUMBER() AS ErrorNumber ,
+				ERROR_MESSAGE() AS ErrorMessage;  
+		  ROLLBACK TRANSACTION MAKERESERVATION;
+	   END
     END CATCH;
- --If we didn't rollback, @@TRANCOUNT should be > 0 and we should commit
-    IF @@TRANCOUNT > 0
-        COMMIT;
-
-
-
-
 GO
 

@@ -1,5 +1,6 @@
 USE VEGAUAT
 GO
+--DROP PROCEDURE [dbo].[sp_epi_check_in]
 CREATE PROCEDURE [dbo].[sp_epi_check_in]
 --input parameters for the SP
     @ProfileID INT ,
@@ -13,13 +14,12 @@ CREATE PROCEDURE [dbo].[sp_epi_check_in]
     @ReservationStayID INT ,
     @TrackingNumber NVARCHAR(64)
 AS
-    BEGIN TRAN;
     BEGIN TRY
 		-- check if resrvation exists, and status is reserved, and room is not null, then we can CHECK IN
         DECLARE @RoomID INT;
 
 
-        SET @RoomID = ( SELECT  RoomID
+        SET @RoomID = ( SELECT  TOP 1 RoomID
                         FROM    dbo.ReservationStayDate
                         WHERE   ReservationStayID = @ReservationStayID
                                 AND StayDate = @CheckInDate  --primary key composite field of 2
@@ -31,46 +31,40 @@ AS
                   FROM      Reservation
                   WHERE     ReservationID = @ReservationID
                 ) = 'CONFIRMED'
-            AND EXISTS ( SELECT RoomID
+            AND EXISTS ( SELECT TOP 1 RoomID
                          FROM   ReservationStayDate
                          WHERE  ReservationStayID = @ReservationStayID
                                 AND RoomID = @RoomID )
-            AND ( SELECT    RoomID
+            AND ( SELECT    TOP 1 RoomID
                   FROM      ReservationStayDate
                   WHERE     ReservationStayID = @ReservationStayID
                             AND RoomID = @RoomID
                 ) IS NOT NULL
             BEGIN
+		  BEGIN TRANSACTION CHECKIN
 
                 DECLARE @CreatedBy NVARCHAR(10);
                 DECLARE @nowDate DATETIME;
                 DECLARE @PropertyCode NVARCHAR(4);
-                DECLARE @EVENT_ID NVARCHAR(64);
-
 
                 SET @CreatedBy = N'R5';
                 SET @nowDate = GETDATE();
                 SET @PropertyCode = N'VEGA';
-                SET @EVENT_ID = ( SELECT    CAST(MAX(EVT_EVENTID) + 1 AS NVARCHAR)
-                                  FROM      dbo.P5ROOMBLOCKINGEVENTS
-                                ); -- according to docs it is an identity
-
 
                 UPDATE  dbo.ReservationStay
                 SET     StatusCode = N'INHOUSE' ,
                         PMSStatusCode = N'INHOUS' ,
+				    SettlementTypeCode = N'100', -- TODO (HMS  says this is required to Check In)
                         UpdatedOn = GETDATE() ,
                         UpdatedBy = @CreatedBy
-                WHERE   ReservationStayID = @ReservationStayID;
-  -- primary key
+                WHERE   ReservationStayID = @ReservationStayID; -- primary key
 
 
                 UPDATE  dbo.Reservation
                 SET     StatusCode = N'INHOUSE' ,
                         UpdatedOn = GETDATE() ,
                         UpdatedBy = @CreatedBy
-                WHERE   ReservationID = @ReservationID;
-  -- primary key
+                WHERE   ReservationID = @ReservationID; -- primary key
 
 
 
@@ -170,19 +164,16 @@ AS
                         );
 
 
-
+		  COMMIT TRANSACTION CHECKIN
             END;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
+	   BEGIN
             SELECT  @ProfileID AS ProfileID ,
                     ERROR_NUMBER() AS ErrorNumber ,
                     ERROR_MESSAGE() AS ErrorMessage;  
-        ROLLBACK;
+		  ROLLBACK TRANSACTION CHECKIN;
+	   END
     END CATCH;
- --If we didn't rollback, @@TRANCOUNT should be > 0 and we should commit
-    IF @@TRANCOUNT > 0
-        COMMIT;
-
-
 GO

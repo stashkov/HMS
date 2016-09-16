@@ -1,19 +1,15 @@
 USE VEGAUAT
 GO
+--DROP PROCEDURE [dbo].[sp_epi_check_out]
 CREATE PROCEDURE [dbo].[sp_epi_check_out]
 --input parameters for the SP
     @ProfileID INT ,
-    @SourceCode NVARCHAR(6) ,
-    @GuaranteeCode NVARCHAR(6) ,
     @CheckInDate DATETIME ,
     @CheckOutDate DATETIME ,
-    @RatePlanCode NVARCHAR(6) ,
-    @RoomTypeCode NVARCHAR(6) ,
     @ReservationID INT ,
     @ReservationStayID INT ,
     @TrackingNumber NVARCHAR(64)
 AS
-    BEGIN TRAN;
     BEGIN TRY
 		-- check if resrvation exists, and status is INHOUSE, then we can CHECK OUT
         IF EXISTS ( SELECT  ReservationStayID
@@ -24,9 +20,8 @@ AS
                   WHERE     ReservationID = @ReservationID
                 ) = 'INHOUSE'
             BEGIN
-
-
-			
+		  BEGIN TRANSACTION CHECKOUT
+			 PRINT 'imma inside transaction'
                 DECLARE @CreatedBy NVARCHAR(10);
 
                 DECLARE @nowDate DATETIME;
@@ -132,20 +127,17 @@ AS
                           0  -- ACT_UPDATECOUNT - numeric
                         );
 
-
-
+		  COMMIT TRANSACTION CHECKOUT
             END;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
+	   BEGIN
             SELECT  @ProfileID AS ProfileID ,
                     ERROR_NUMBER() AS ErrorNumber ,
                     ERROR_MESSAGE() AS ErrorMessage;  
-        ROLLBACK;
+		  ROLLBACK TRANSACTION CHECKOUT;
+	   END
     END CATCH;
- --If we didn't rollback, @@TRANCOUNT should be > 0 and we should commit
-    IF @@TRANCOUNT > 0
-        COMMIT;
-
 
 GO

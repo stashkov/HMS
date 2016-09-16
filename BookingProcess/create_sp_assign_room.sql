@@ -1,6 +1,6 @@
 USE VEGAUAT
 GO
-
+--DROP PROCEDURE dbo.sp_epi_assign_room
 CREATE PROCEDURE [dbo].[sp_epi_assign_room]
 -- HMS Interface: assign a room
     @ProfileID INT ,
@@ -10,7 +10,6 @@ CREATE PROCEDURE [dbo].[sp_epi_assign_room]
     @ConfirmationNumber NVARCHAR(64) ,
     @RoomCode NVARCHAR(30)
 AS
-    BEGIN TRAN;
     BEGIN TRY
         DECLARE @RoomID INT;
         DECLARE @PropertyCode NVARCHAR(4);
@@ -24,26 +23,24 @@ AS
                       );
 		--check if a room is already specified for this ReservationStayID
         IF NOT EXISTS ( SELECT  RoomID
-                    FROM    ReservationStayDate
-                    WHERE   ReservationStayID = @ReservationStayID
-                            AND RoomID = @RoomID )
-            AND ( SELECT    RoomID
-                  FROM      ReservationStayDate
-                  WHERE     ReservationStayID = @ReservationStayID
-                            AND RoomID = @RoomID
-                ) IS NULL
+				    FROM    ReservationStayDate
+				    WHERE   ReservationStayID = @ReservationStayID
+						  AND RoomID = @RoomID )
+				    AND 
+				    ( SELECT    RoomID
+				      FROM      ReservationStayDate
+					 WHERE     ReservationStayID = @ReservationStayID
+							 AND RoomID = @RoomID
+				    ) IS NULL
             BEGIN
+		  BEGIN TRANSACTION ASSIGNROOM
                 DECLARE @CreatedBy NVARCHAR(10);
                 DECLARE @FullName NVARCHAR(102);
-                DECLARE @EVENT_ID NVARCHAR(64);
+			 SET @CreatedBy = N'R5'
 
                 SET @FullName = ( SELECT    LastName + ', ' + FirstName
                                   FROM      dbo.NameInfo
                                   WHERE     ProfileID = @ProfileID
-                                );
-
-                SET @EVENT_ID = ( SELECT    CAST(ISNULL(MAX(CAST(EVT_EVENTID AS INT)), 0) + 1 AS NVARCHAR)
-                                  FROM      dbo.P5ROOMBLOCKINGEVENTS  -- documentation says Sequence key of events (maybe PK?)
                                 );
 								
                 UPDATE  dbo.ReservationStayDate
@@ -57,6 +54,9 @@ AS
                 EXEC dbo.prc_RoomBlockLock @ReservationStayID;
  -- ResStayID
 
+			 -- get next sequence for P5ACCOUNT table
+			 DECLARE @EVT_EVENTID INT
+			 EXEC dbo.GetNextSequence @sequenceAlias = N'EVENT', @seqNum = @EVT_EVENTID OUTPUT
                 INSERT  INTO dbo.P5ROOMBLOCKINGEVENTS
                         ( EVT_EVENTID ,
                           EVT_ROOM ,
@@ -81,15 +81,15 @@ AS
                           EVT_EXPIRATIONDATE ,
                           EVT_DAYUSE
                         )
-                VALUES  ( @EVENT_ID , -- EVT_EVENTID - nvarchar(30) -- TODO not sure how this field is generated, but for now just use max (docs says 'Sequence key of events' so this supports the idea)
-                          @RoomID , -- EVT_ROOM - nvarchar(30)
+                VALUES  ( @EVT_EVENTID , -- EVT_EVENTID - nvarchar(30) -- docs says 'Sequence key of events' get frmo sequence
+                          @RoomCode , -- EVT_ROOM - nvarchar(30)
                           @PropertyCode , -- EVT_PROPERTYCODE - nvarchar(15)
                           @ReservationStayID , -- EVT_RESERVATIONSTAYID - int
                           @CheckInDate , -- EVT_STARTDATE - datetime
                           @CheckOutDate , -- EVT_ENDDATE - datetime
                           N'Reservation' , -- EVT_EVENTNAME - nvarchar(15)
                           N'Reserved' , -- EVT_STATUS - nvarchar(15)
-                          @RoomID , -- EVT_EVENTROOM - nvarchar(30)
+                          @RoomCode , -- EVT_EVENTROOM - nvarchar(30)
                           @ConfirmationNumber + '-1' , -- EVT_PMSCONFIRMATIONNUMBER - nvarchar(50)
                           @FullName , -- EVT_GUESTNAME - nvarchar(150)
                           NULL , -- EVT_VIPLEVEL - nvarchar(50)
@@ -100,23 +100,20 @@ AS
                           GETDATE() , -- EVT_CREATED - datetime
                           @CreatedBy , -- EVT_UPDATEDBY - nvarchar(30)
                           GETDATE() , -- EVT_UPDATED - datetime
-                          NULL , -- EVT_UPDATECOUNT - numeric
+                          0 , -- EVT_UPDATECOUNT - numeric
                           NULL , -- EVT_EXPIRATIONDATE - datetime
                           NULL  -- EVT_DAYUSE - tinyint  --TODO may later cause problems with payments
                         );
-
+		  COMMIT TRANSACTION ASSIGNROOM
             END;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
+	   BEGIN
             SELECT  @ProfileID AS ProfileID ,
                     ERROR_NUMBER() AS ErrorNumber ,
                     ERROR_MESSAGE() AS ErrorMessage;  
-        ROLLBACK;
+		  ROLLBACK TRANSACTION ASSIGNROOM;
+	   END
     END CATCH;
- --If we didn't rollback, @@TRANCOUNT should be > 0 and we should commit
-    IF @@TRANCOUNT > 0
-        COMMIT;
-
-
 GO

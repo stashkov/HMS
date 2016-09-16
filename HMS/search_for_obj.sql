@@ -49,4 +49,3 @@ ORDER BY sys.dm_db_index_usage_stats.last_user_update DESC
 --P5TEMPCORETICKET
 --R5SCHEDULEDJOBS
 
-
