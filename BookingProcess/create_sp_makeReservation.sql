@@ -1116,6 +1116,7 @@ AS
                     WHERE   nbr - 1 <= DATEDIFF(DAY, @CheckInDate, @CheckOutDate);
 	   END
 
+
 	   IF @isReservationExists = 1
 	   BEGIN
 		  PRINT 'profile and reservation exist; collecting data'
@@ -1159,6 +1160,7 @@ AS
 				AND ArrivalDate = @CheckInDate
 		  END 
 	   END
+   
     	   
 	   IF @TrackingNumber IS NULL OR @ReservationID IS NULL OR @ReservationStayID IS NULL
 	   BEGIN
