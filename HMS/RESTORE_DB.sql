@@ -26,6 +26,8 @@ restart HMS Application Server
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_check_in.sql"
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_check_out.sql"
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_makeReservation.sql"
+
+:r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\block_rooms\sp_epi_block_room.sql"
 -- Turn off "SQLCMD Mode"
 
 
