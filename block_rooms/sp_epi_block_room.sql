@@ -10,15 +10,14 @@ CREATE PROCEDURE [dbo].[sp_epi_room_block]
     @NEWorCOMPLETEorCANCEL nvarchar(8)
 AS
     BEGIN TRY
-    BEGIN TRANSACTION BLOCKROOM
+    BEGIN TRANSACTION
+	   DECLARE @WorkOrderNumber NVARCHAR(20);
         DECLARE @Status NVARCHAR(10);
         DECLARE @PropertyCode NVARCHAR(4);
         DECLARE @CreatedBy NVARCHAR(10);
         SET @Status = N'ACT'
         SET @PropertyCode = N'VEGA'
         SET @CreatedBy = N'R5';
-          
-       DECLARE @WorkOrderNumber NVARCHAR(20);
 
         IF @NEWorCOMPLETEorCANCEL = N'NEW'
             BEGIN
@@ -214,13 +213,18 @@ AS
                     RMS_FRONTDESKSTATUS = N'OOS', -- nvarchar
                     RMS_HOUSEKEEPINGSTATUS = N'OOS' -- nvarchar
                 WHERE RMS_CODE = @RoomCode AND RMS_PROPERTY = @PropertyCode
+			 
+			 RETURN
             END;
+
+	  SET @WorkOrderNumber = ( SELECT WOS_CODE FROM dbo.P5WORKORDERS 
+						  WHERE WOS_REASON = @Reason
+							 AND WOS_DESC = @Description
+							 AND WOS_ROOMCODE = @RoomCode
+							 AND WOS_STARTDATE = @StartDate )
+
         IF @NEWorCOMPLETEorCANCEL = N'COMPLETE'
             BEGIN
-                SET @WorkOrderNumber = (SELECT WOS_SQLIDENTITY 
-								FROM P5WORKORDERS 
-								WHERE dbo.P5WORKORDERS.WOS_ROOMCODE = @RoomCode 
-								AND WOS_REASON = @Reason)
 
                 UPDATE dbo.P5WORKORDERS
                 SET 
@@ -239,14 +243,34 @@ AS
                     RMS_HOUSEKEEPINGSTATUS = N'VAC' -- nvarchar
                 WHERE RMS_CODE = @RoomCode AND RMS_PROPERTY = @PropertyCode
 
+			 RETURN
             END;
-    COMMIT TRANSACTION BLOCKROOM
+	   IF @NEWorCOMPLETEorCANCEL = N'CANCEL'
+		  BEGIN
+			 UPDATE P5WORKORDERS
+			 SET 
+				WOS_STATUS = N'CAN'
+			 WHERE WOS_CODE = @WorkOrderNumber
+
+			 DELETE 
+			 FROM dbo.P5ROOMBLOCKINGEVENTS
+			 WHERE EVT_WORKORDERNUMBER = @WorkOrderNumber
+
+			 UPDATE dbo.P5ROOMSTATUS
+			 SET
+				RMS_FRONTDESKSTATUS = N'VAC', -- nvarchar
+				RMS_HOUSEKEEPINGSTATUS = N'VAC' -- nvarchar
+			 WHERE RMS_CODE = @RoomCode AND RMS_PROPERTY = @PropertyCode
+
+			 RETURN
+		  END;
+    COMMIT TRANSACTION
     END TRY
     BEGIN CATCH
 	   BEGIN
 		  IF @@TRANCOUNT > 0
 			 SELECT  ERROR_MESSAGE() AS ErrorMessage;  
-			 ROLLBACK TRANSACTION BLOCKROOM;
+			 ROLLBACK TRANSACTION;
 	   END
     END CATCH;
 GO
