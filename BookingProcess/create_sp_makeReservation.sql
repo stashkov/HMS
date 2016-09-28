@@ -19,7 +19,10 @@ CREATE PROCEDURE [dbo].[sp_epi_make_reservation]
     @RatePlanCode NVARCHAR(6) ,-- 'HIGH1' 
     @RoomTypeCode NVARCHAR(6) ,-- 'SRTS' 
     @GuaranteeCode NVARCHAR(6) ,-- 'CASH' 
-    @SourceCode NVARCHAR(6) ,-- 'CALL' 
+    @SourceCode NVARCHAR(6) ,-- 'CALL'
+    @Rate DECIMAL(13,2), --'5200'
+    @AdultCount TINYINT,
+    @ChildCount TINYINT,
     @ReservationStayID INT = NULL OUT ,
     @ReservationID INT = NULL OUT ,
     @TrackingNumber NVARCHAR(64) = NULL OUT,
@@ -50,7 +53,6 @@ AS
 		      DECLARE @TotalRoomRevenue DECIMAL;
                 DECLARE @AccountID INT;
                 DECLARE @PropertyCode NVARCHAR(4);
-                DECLARE @GuestCount INT;
                 DECLARE @CancellationPolicyID INT;
                 DECLARE @PropertyRatePlanID INT;      
                 DECLARE @RoomTypeID INT;
@@ -60,12 +62,10 @@ AS
                 DECLARE @FullName NVARCHAR(102);
                 DECLARE @FirstName NVARCHAR(102);
                 DECLARE @LastName NVARCHAR(102);
-                DECLARE @AdultCount TINYINT;
                 DECLARE @StatusCode NVARCHAR(15); -- N'CONFIRMED';
                 DECLARE @NameInfoID INT;
                 DECLARE @nowDate DATETIME;
 
-                SET @AdultCount = 1;
                 SET @TotalRoomRevenue = 5000; -- TODO map to actual data
                 SET @nowDate = ( SELECT GETDATE() );
 
@@ -92,7 +92,6 @@ AS
                 SET @Nights = DATEDIFF(dd, @CheckInDate, @CheckOutDate);
                 SET @CreatedBy = N'R5';
                 SET @CancellationPolicyID = 8;  -- need actual mapping for this
-                SET @GuestCount = 1;  -- 1 is always acceptable
                 SET @PropertyCode = N'VEGA';
                 SET @PropertyRatePlanID = ( SELECT  PropertyRatePlanID
                                             FROM    dbo.PropertyRatePlan
@@ -369,7 +368,7 @@ AS
                           NULL , -- TAProfileID - int
                           NULL , -- TAProfileID2 - int
                           @AdultCount , -- AdultCount - int
-                          0 , -- ChildCount - int
+                          @ChildCount , -- ChildCount - int
                           @CheckInDate , -- ArrivalDate - datetime
                           @CheckOutDate , -- DepartureDate - datetime
                           @StatusCode , -- StatusCode - nvarchar(50)
@@ -500,8 +499,8 @@ AS
                        @TotalRoomRevenue , -- RateAmount - decimal
                        @TotalRoomRevenue , -- RoomAmount - decimal
                        0 , -- TaxAmount - decimal
-                       @GuestCount , -- AdultCount - int
-                       0 , -- ChildCount - int
+                       @AdultCount , -- AdultCount - int
+                       @ChildCount , -- ChildCount - int
                        NULL , -- OriginalRateAmount - decimal
                        NULL , -- RateOverrideReasonCode - nvarchar(6)
                        N'HMS' , -- SourceLastUpdatedBy - nvarchar(50)
