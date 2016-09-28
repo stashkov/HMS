@@ -1,4 +1,5 @@
---USE VEGAUAT;
+USE VEGAUAT;
+GO
 CREATE PROC SearchAllTables
     (
       @SearchStr NVARCHAR(100)
