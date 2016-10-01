@@ -33,7 +33,7 @@ EXEC sp_fkeys 'P5ACCOUNT'
 
 
 --index usage statistics
-USE VEGAUAT;
+
 SELECT DISTINCT OBJECT_NAME(OBJECT_ID) AS DatabaseName, last_user_update
 FROM sys.dm_db_index_usage_stats
 WHERE database_id = DB_ID( 'VEGAUAT')
@@ -49,3 +49,7 @@ ORDER BY sys.dm_db_index_usage_stats.last_user_update DESC
 --P5TEMPCORETICKET
 --R5SCHEDULEDJOBS
 
+USE VEGAUAT;
+select *
+from sys.sequences
+WHERE start_value != current_value

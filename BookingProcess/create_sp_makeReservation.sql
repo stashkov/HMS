@@ -1,8 +1,6 @@
-USE VEGAUAT
+USE [VEGAUAT]
 GO
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+
 -------------------------------------------
 ---- workflow against different statuses
 ---- make reservation = CONFIRMED
@@ -50,7 +48,6 @@ AS
 	   IF @isReservationExists = 0
 	   BEGIN
 		  PRINT 'profile exists but reservation does not; creating reservation'
-		      DECLARE @TotalRoomRevenue DECIMAL;
                 DECLARE @AccountID INT;
                 DECLARE @PropertyCode NVARCHAR(4);
                 DECLARE @CancellationPolicyID INT;
@@ -66,7 +63,6 @@ AS
                 DECLARE @NameInfoID INT;
                 DECLARE @nowDate DATETIME;
 
-                SET @TotalRoomRevenue = 5000; -- TODO map to actual data
                 SET @nowDate = ( SELECT GETDATE() );
 
 
@@ -496,8 +492,8 @@ AS
                        NULL , -- PromotionCode - nvarchar(10)
                        N'BSC' , -- ReservationTypeCode - nvarchar(6)
                        N'DY' , -- LOSScheduleCode - nvarchar(6)
-                       @TotalRoomRevenue , -- RateAmount - decimal
-                       @TotalRoomRevenue , -- RoomAmount - decimal
+                       @Rate , -- RateAmount - decimal
+                       @Rate , -- RoomAmount - decimal
                        0 , -- TaxAmount - decimal
                        @AdultCount , -- AdultCount - int
                        @ChildCount , -- ChildCount - int
@@ -1183,5 +1179,7 @@ AS
 
 	   RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
     END CATCH;
+
 GO
+
 
