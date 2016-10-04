@@ -57,3 +57,4 @@ PerformanceLoggingBlitz/sp_Blitz*
 PerformanceLoggingBlitz/who_is_active*
 PerformanceLoggingBlitz/AgentAlerts.sql
 PerformanceLoggingBlitz/MaintenanceSolution.sql
+*.csv
