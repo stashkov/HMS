@@ -1109,6 +1109,29 @@ AS
                             FROM      sys.columns c
                           ) nbrs
                     WHERE   nbr - 1 <= DATEDIFF(DAY, @CheckInDate, @CheckOutDate);
+				
+				EXEC [dbo].[prc_UpdateNonGroupPickups]
+				@property = @PropertyCode,
+				@channel = N'HMS',
+				@type = N'PACK',
+				@key = N'BOOK',
+				@addFlag = 1,
+				@startDate = @CheckInDate,
+				@endDate = @CheckOutDate,
+				@roomCount = 1,
+				@updatedBy = @CreatedBy
+
+				EXEC [dbo].[prc_UpdateNonGroupPickups]
+				@property = @PropertyCode,
+				@channel = N'HMS',
+				@type = N'ROOM',
+				@key = @RoomTypeCode,
+				@addFlag = 1,
+				@startDate = @CheckInDate,
+				@endDate = @CheckOutDate,
+				@roomCount = 1,
+				@updatedBy = @CreatedBy
+
 	   END
 
 
