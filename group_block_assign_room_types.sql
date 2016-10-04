@@ -2,10 +2,14 @@
 --select * from PropGroupBookingControl ORDER BY sourcelastupdatedon desc -- insert 
 ----select * from PropGroupBooking --nothing
 
-
-DECLARE @RatePlanList NVARCHAR(100) = N'SRTS,STQS,STTS'
-DECLARE @RoomCountList NVARCHAR(100) = N'10,15,5'
-DECLARE @PropGroupBookingID INT = 1
+-- both will work
+--DECLARE @RatePlanList NVARCHAR(100) = N'SRTS,STQS,STTS'
+--DECLARE @RoomCountList NVARCHAR(100) = N'10,15,5'
+DECLARE @RatePlanList NVARCHAR(100) = N'SRTS'
+DECLARE @RoomCountList NVARCHAR(100) = N'25'
+DECLARE @CheckInDate DATETIME = '20160711'
+DECLARE @CheckOutDate DATETIME = '20160715'
+DECLARE @PropGroupBookingID INT = 3
 
 CREATE TABLE #RoomTypeCount (ID INT identity(1,1), RatePlanCode nvarchar(10), RoomCount int)
 DECLARE @tmpRatePlanCode nvarchar(10), @PosRate int, @PosCount int
