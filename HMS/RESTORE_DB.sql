@@ -31,9 +31,9 @@ restart HMS Application Server
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_makeReservation.sql"
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_cancel_reservation.sql"
 
-:r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\block_rooms\sp_epi_block_room.sql"
+:r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\sp_create_group.sql"
 
---and 3 other procedures
+:r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\block_rooms\sp_epi_block_room.sql"
 
 -- Turn off "SQLCMD Mode"
 
