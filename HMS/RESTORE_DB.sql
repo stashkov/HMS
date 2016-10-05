@@ -16,6 +16,8 @@ GO
 USE hotel;
 TRUNCATE TABLE logs.clients
 TRUNCATE TABLE logs.errors
+TRUNCATE TABLE logs.group_blocks
+TRUNCATE TABLE logs.room_blocks
 
 
 --4
@@ -30,6 +32,9 @@ restart HMS Application Server
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\BookingProcess\create_sp_cancel_reservation.sql"
 
 :r "D:\Dropbox\SQL Server Management Studio\Aquivalabs\HMS\block_rooms\sp_epi_block_room.sql"
+
+--and 3 other procedures
+
 -- Turn off "SQLCMD Mode"
 
 
