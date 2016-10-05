@@ -1,5 +1,6 @@
 USE VEGAUAT
 GO
+
 --DROP PROCEDURE [dbo].[sp_epi_room_block]
 CREATE PROCEDURE [dbo].[sp_epi_room_block]
     @RoomCode INT ,
@@ -214,7 +215,6 @@ AS
                     RMS_HOUSEKEEPINGSTATUS = N'OOS' -- nvarchar
                 WHERE RMS_CODE = @RoomCode AND RMS_PROPERTY = @PropertyCode
 			 
-			 RETURN
             END;
 
 	  SET @WorkOrderNumber = ( SELECT WOS_CODE FROM dbo.P5WORKORDERS 
@@ -243,7 +243,6 @@ AS
                     RMS_HOUSEKEEPINGSTATUS = N'VAC' -- nvarchar
                 WHERE RMS_CODE = @RoomCode AND RMS_PROPERTY = @PropertyCode
 
-			 RETURN
             END;
 	   IF @NEWorCOMPLETEorCANCEL = N'CANCEL'
 		  BEGIN
@@ -262,7 +261,6 @@ AS
 				RMS_HOUSEKEEPINGSTATUS = N'VAC' -- nvarchar
 			 WHERE RMS_CODE = @RoomCode AND RMS_PROPERTY = @PropertyCode
 
-			 RETURN
 		  END;
     COMMIT TRANSACTION
     END TRY
@@ -273,4 +271,9 @@ AS
 			 ROLLBACK TRANSACTION;
 	   END
     END CATCH;
+
+
+
 GO
+
+
